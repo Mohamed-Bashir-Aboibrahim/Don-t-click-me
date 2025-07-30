@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ULTIMATE DON'T CLICK ME!</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            transition: all 3s;
+        }
+        
+        #btn {
+            position: relative;
+            padding: 40px 80px;
+            font-size: 48px;
+            background: linear-gradient(45deg, #ff0000, #ff4500);
+            color: white;
+            border: none;
+            border-radius: 100px;
+            cursor: pointer;
+            box-shadow: 0 0 80px red, 0 0 40px yellow;
+            transition: all 0.8s;
+            font-weight: bold;
+            text-transform: uppercase;
+            z-index: 1000;
+            text-shadow: 0 0 10px black;
+            animation: pulse 2s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 80px red, 0 0 40px yellow; }
+            100% { transform: scale(1.1); box-shadow: 0 0 120px red, 0 0 80px yellow; }
+        }
+        
+        #btn:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 150px red, 0 0 100px yellow;
+            animation: none;
+        }
+        
+        .crazy-element {
+            position: absolute;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .permanent-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            opacity: 0;
+            animation: confetti-fall 5s linear forwards;
+        }
+        
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <button id="btn">DON'T CLICK ME!</button>
+
+    <script>
+        const btn = document.getElementById('btn');
+        let clickCount = 0;
+        const maxClicks = 20;
+        let currentEffects = [];
+        let seenEffects = new Set();
+        let allEffectsSeen = false;
+        
+        // Clean up previous effects
+        function cleanupEffects() {
+            currentEffects.forEach(effect => {
+                if (effect.element && effect.element.parentNode) {
+                    effect.element.remove();
+                }
+                if (effect.interval) clearInterval(effect.interval);
+                if (effect.timeout) clearTimeout(effect.timeout);
+                if (effect.animation) cancelAnimationFrame(effect.animation);
+            });
+            currentEffects = [];
+        }
+        
+        // Special finale effect
+        function specialFinale() {
+            cleanupEffects();
+            allEffectsSeen = true;
+            
+            // Change background
+            document.body.style.background = 'radial-gradient(circle, #000000, #330033)';
+            
+            // Create special container
+            const finaleContainer = document.createElement('div');
+            finaleContainer.className = 'permanent-effect';
+            document.body.appendChild(finaleContainer);
+            
+            // Add title
+            const title = document.createElement('h1');
+            title.textContent = 'CONGRATULATIONS!';
+            title.style.position = 'absolute';
+            title.style.top = '20%';
+            title.style.left = '0';
+            title.style.width = '100%';
+            title.style.textAlign = 'center';
+            title.style.color = '#ff00ff';
+            title.style.fontSize = '72px';
+            title.style.textShadow = '0 0 20px #00ffff, 0 0 10px #ffffff';
+            title.style.zIndex = '1001';
+            finaleContainer.appendChild(title);
+            
+            // Add subtitle
+            const subtitle = document.createElement('h2');
+            subtitle.textContent = 'You\'ve unlocked the ULTIMATE SECRET!';
+            subtitle.style.position = 'absolute';
+            subtitle.style.top = '30%';
+            subtitle.style.left = '0';
+            subtitle.style.width = '100%';
+            subtitle.style.textAlign = 'center';
+            subtitle.style.color = '#ffff00';
+            subtitle.style.fontSize = '36px';
+            subtitle.style.textShadow = '0 0 10px #ff0000';
+            subtitle.style.zIndex = '1001';
+            finaleContainer.appendChild(subtitle);
+            
+            // Create particle explosion
+            const particleCount = 500;
+            const particles = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'crazy-element';
+                particle.style.width = '10px';
+                particle.style.height = '10px';
+                particle.style.left = `${window.innerWidth / 2}px`;
+                particle.style.top = `${window.innerHeight / 2}px`;
+                particle.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                particle.style.borderRadius = '50%';
+                particle.style.transform = 'scale(0)';
+                finaleContainer.appendChild(particle);
+                
+                particles.push({
+                    element: particle,
+                    x: 0,
+                    y: 0,
+                    vx: Math.random() * 10 - 5,
+                    vy: Math.random() * 10 - 5,
+                    life: Math.random() * 3000 + 2000
+                });
+            }
+            
+            // Animate particles
+            const startTime = performance.now();
+            
+            function animateParticles(currentTime) {
+                const elapsed = currentTime - startTime;
+                
+                particles.forEach(particle => {
+                    const progress = Math.min(elapsed / particle.life, 1);
+                    
+                    if (progress < 1) {
+                        particle.x += particle.vx;
+                        particle.y += particle.vy;
+                        particle.vy += 0.1; // gravity
+                        
+                        particle.element.style.left = `${window.innerWidth / 2 + particle.x}px`;
+                        particle.element.style.top = `${window.innerHeight / 2 + particle.y}px`;
+                        particle.element.style.transform = `scale(${1 - progress})`;
+                        particle.element.style.opacity = 1 - progress;
+                        
+                        requestAnimationFrame(animateParticles);
+                    } else {
+                        particle.element.remove();
+                    }
+                });
+            }
+            
+            // Start animation
+            animateParticles(startTime);
+            
+            // Create continuous confetti
+            function createConfetti() {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * window.innerWidth}px`;
+                confetti.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                finaleContainer.appendChild(confetti);
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+            
+            const confettiInterval = setInterval(createConfetti, 100);
+            
+            // Add floating emojis
+            const emojis = ['🎉', '🎊', '🌟', '✨', '💫', '🔥', '💥', '🌈'];
+            const floatingEmojis = [];
+            
+            for (let i = 0; i < 30; i++) {
+                const emoji = document.createElement('div');
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.position = 'absolute';
+                emoji.style.fontSize = `${Math.random() * 40 + 20}px`;
+                emoji.style.left = `${Math.random() * window.innerWidth}px`;
+                emoji.style.top = `${Math.random() * window.innerHeight}px`;
+                emoji.style.opacity = '0';
+                emoji.style.transition = 'opacity 2s';
+                finaleContainer.appendChild(emoji);
+                
+                setTimeout(() => {
+                    emoji.style.opacity = '1';
+                }, i * 200);
+                
+                floatingEmojis.push({
+                    element: emoji,
+                    x: parseFloat(emoji.style.left),
+                    y: parseFloat(emoji.style.top),
+                    vx: Math.random() * 2 - 1,
+                    vy: Math.random() * 2 - 1
+                });
+            }
+            
+            // Animate floating emojis
+            function floatEmojis() {
+                floatingEmojis.forEach(emoji => {
+                    emoji.x += emoji.vx;
+                    emoji.y += emoji.vy;
+                    
+                    if (emoji.x < 0) emoji.x = window.innerWidth;
+                    if (emoji.x > window.innerWidth) emoji.x = 0;
+                    if (emoji.y < 0) emoji.y = window.innerHeight;
+                    if (emoji.y > window.innerHeight) emoji.y = 0;
+                    
+                    emoji.element.style.left = `${emoji.x}px`;
+                    emoji.element.style.top = `${emoji.y}px`;
+                });
+                
+                requestAnimationFrame(floatEmojis);
+            }
+            
+            floatEmojis();
+            
+            // Add to current effects
+            currentEffects.push({
+                interval: confettiInterval,
+                animation: floatEmojis
+            });
+            
+            // Change button
+            btn.textContent = 'THE END?';
+            btn.style.background = 'linear-gradient(45deg, #ff00ff, #00ffff)';
+            btn.style.boxShadow = '0 0 150px #ff00ff, 0 0 100px #00ffff';
+            btn.style.animation = 'none';
+            
+            // Add reset after 30 seconds
+            setTimeout(() => {
+                location.reload();
+            }, 30000);
+        }
+        
+        // Collection of crazy effects
+        const effects = [
+            // Effect 1: Rainbow galaxy explosion (lasts 15 seconds)
+            function() {
+                cleanupEffects();
+                const container = document.createElement('div');
+                container.className = 'permanent-effect';
+                document.body.appendChild(container);
+                
+                for (let i = 0; i < 200; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'crazy-element';
+                    star.style.width = `${Math.random() * 10 + 5}px`;
+                    star.style.height = star.style.width;
+                    star.style.left = `${window.innerWidth / 2}px`;
+                    star.style.top = `${window.innerHeight / 2}px`;
+                    star.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    star.style.borderRadius = '50%';
+                    star.style.transform = 'scale(0)';
+                    container.appendChild(star);
+                    
+                    setTimeout(() => {
+                        star.style.transition = 'all 2s ease-out';
+                        star.style.transform = `translate(${Math.random() * 1000 - 500}px, ${Math.random() * 1000 - 500}px) scale(${Math.random() * 2 + 0.5})`;
+                        star.style.opacity = '0.8';
+                        
+                        // Make stars twinkle
+                        setInterval(() => {
+                            star.style.opacity = Math.random() * 0.5 + 0.3;
+                        }, Math.random() * 1000 + 500);
+                    }, i * 20);
+                }
+                
+                const effect = {
+                    element: container,
+                    timeout: setTimeout(() => {
+                        container.style.transition = 'opacity 3s';
+                        container.style.opacity = '0';
+                        setTimeout(() => container.remove(), 3000);
+                    }, 15000)
+                };
+                currentEffects.push(effect);
+            },
+            
+            // Effect 2: Inverted gravity world (lasts 20 seconds)
+            function() {
+                cleanupEffects();
+                document.body.style.transform = 'rotate(180deg)';
+                document.body.style.filter = 'hue-rotate(180deg)';
+                
+                // Make all elements float upward
+                const allElements = Array.from(document.querySelectorAll('*'));
+                allElements.forEach(el => {
+                    if (el === document.documentElement || el === document.head || el === document.body) return;
+                    
+                    el.style.transition = 'transform 0.5s';
+                    const floatInterval = setInterval(() => {
+                        const currentY = parseFloat(el.style.transform?.replace(/[^\d.-]/g, '') || 0);
+                        el.style.transform = `translateY(${currentY - 1}px)`;
+                    }, 50);
+                    
+                    currentEffects.push({
+                        interval: floatInterval
+                    });
+                });
+                
+                const effect = {
+                    timeout: setTimeout(() => {
+                        document.body.style.transform = '';
+                        document.body.style.filter = '';
+                        allElements.forEach(el => {
+                            if (el === document.documentElement || el === document.head || el === document.body) return;
+                            el.style.transform = '';
+                            el.style.transition = '';
+                        });
+                    }, 20000)
+                };
+                currentEffects.push(effect);
+            },
+            
+            // Effect 3: Button becomes a monster (lasts 18 seconds)
+            function() {
+                cleanupEffects();
+                const originalText = btn.textContent;
+                btn.textContent = 'FEED ME MORE!';
+                btn.style.background = 'linear-gradient(45deg, #8b0000, #ff4500)';
+                
+                // Grow mouth
+                const mouth = document.createElement('div');
+                mouth.style.position = 'absolute';
+                mouth.style.bottom = '-20px';
+                mouth.style.left = '50%';
+                mouth.style.transform = 'translateX(-50%)';
+                mouth.style.width = '0';
+                mouth.style.height = '0';
+                mouth.style.borderLeft = '40px solid transparent';
+                mouth.style.borderRight = '40px solid transparent';
+                mouth.style.borderTop = '60px solid #ff0000';
+                mouth.style.transition = 'all 0.5s';
+                btn.appendChild(mouth);
+                
+                // Animate mouth
+                let mouthOpen = false;
+                const mouthInterval = setInterval(() => {
+                    if (mouthOpen) {
+                        mouth.style.borderTop = '60px solid #ff0000';
+                        mouth.style.borderLeft = '40px solid transparent';
+                        mouth.style.borderRight = '40px solid transparent';
+                    } else {
+                        mouth.style.borderTop = '0 solid #ff0000';
+                        mouth.style.borderLeft = '20px solid transparent';
+                        mouth.style.borderRight = '20px solid transparent';
+                    }
+                    mouthOpen = !mouthOpen;
+                }, 500);
+                
+                // Create food items
+                const foods = ['🍕', '🍔', '🌭', '🍟', '🍦', '🍩'];
+                const foodInterval = setInterval(() => {
+                    const food = document.createElement('div');
+                    food.textContent = foods[Math.floor(Math.random() * foods.length)];
+                    food.style.position = 'absolute';
+                    food.style.fontSize = '30px';
+                    food.style.left = `${Math.random() * window.innerWidth}px`;
+                    food.style.top = '-50px';
+                    document.body.appendChild(food);
+                    
+                    const fallSpeed = Math.random() * 3 + 2;
+                    const fall = setInterval(() => {
+                        const currentTop = parseFloat(food.style.top);
+                        food.style.top = `${currentTop + fallSpeed}px`;
+                        
+                        if (currentTop > window.innerHeight) {
+                            clearInterval(fall);
+                            food.remove();
+                        }
+                        
+                        // Check if food hits the button
+                        const btnRect = btn.getBoundingClientRect();
+                        const foodRect = food.getBoundingClientRect();
+                        
+                        if (foodRect.bottom > btnRect.top && 
+                            foodRect.right > btnRect.left && 
+                            foodRect.left < btnRect.right) {
+                            food.remove();
+                            clearInterval(fall);
+                            btn.style.transform = 'scale(1.2)';
+                            setTimeout(() => {
+                                btn.style.transform = '';
+                            }, 300);
+                        }
+                    }, 30);
+                    
+                    currentEffects.push({
+                        interval: fall,
+                        element: food
+                    });
+                }, 800);
+                
+                const effect = {
+                    interval: mouthInterval,
+                    foodInterval: foodInterval,
+                    timeout: setTimeout(() => {
+                        clearInterval(mouthInterval);
+                        clearInterval(foodInterval);
+                        btn.textContent = originalText;
+                        btn.style.background = 'linear-gradient(45deg, #ff0000, #ff4500)';
+                        mouth.remove();
+                    }, 18000)
+                };
+                currentEffects.push(effect);
+            },
+            
+            // Effect 4: Text glitch effect (lasts 12 seconds)
+            function() {
+                cleanupEffects();
+                const originalText = btn.textContent;
+                const glitchChars = '!@#$%^&*()_+{}|:"<>?~`';
+                
+                let glitchLevel = 0;
+                const glitchInterval = setInterval(() => {
+                    if (glitchLevel < 1) glitchLevel += 0.05;
+                    
+                    btn.textContent = originalText.split('').map((char, i) => {
+                        if (Math.random() < glitchLevel) {
+                            return glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                        }
+                        return char;
+                    }).join('');
+                }, 100);
+                
+                // Add screen distortion
+                document.body.style.filter = 'url(#glitch)';
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.style.position = 'absolute';
+                svg.style.width = '0';
+                svg.style.height = '0';
+                const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+                filter.id = 'glitch';
+                filter.setAttribute('x', '0');
+                filter.setAttribute('y', '0');
+                filter.setAttribute('width', '100%');
+                filter.setAttribute('height', '100%');
+                
+                const turbulence = document.createElementNS('http://www.w3.org/2000/svg', 'feTurbulence');
+                turbulence.setAttribute('type', 'fractalNoise');
+                turbulence.setAttribute('baseFrequency', '0.01');
+                turbulence.setAttribute('numOctaves', '1');
+                turbulence.setAttribute('result', 'turbulence');
+                
+                const displacement = document.createElementNS('http://www.w3.org/2000/svg', 'feDisplacementMap');
+                displacement.setAttribute('in', 'SourceGraphic');
+                displacement.setAttribute('in2', 'turbulence');
+                displacement.setAttribute('scale', '10');
+                displacement.setAttribute('xChannelSelector', 'R');
+                displacement.setAttribute('yChannelSelector', 'G');
+                
+                filter.appendChild(turbulence);
+                filter.appendChild(displacement);
+                svg.appendChild(filter);
+                document.body.appendChild(svg);
+                
+                // Animate turbulence
+                let turbulenceValue = 0.01;
+                const turbulenceInterval = setInterval(() => {
+                    turbulenceValue += 0.005;
+                    turbulence.setAttribute('baseFrequency', turbulenceValue.toString());
+                }, 200);
+                
+                const effect = {
+                    interval: glitchInterval,
+                    turbulenceInterval: turbulenceInterval,
+                    element: svg,
+                    timeout: setTimeout(() => {
+                        clearInterval(glitchInterval);
+                        clearInterval(turbulenceInterval);
+                        btn.textContent = originalText;
+                        document.body.style.filter = '';
+                        svg.remove();
+                    }, 12000)
+                };
+                currentEffects.push(effect);
+            },
+            
+            // Effect 5: Earthquake with cracks (lasts 15 seconds)
+            function() {
+                cleanupEffects();
+                const container = document.createElement('div');
+                container.className = 'permanent-effect';
+                document.body.appendChild(container);
+                
+                // Create cracks
+                for (let i = 0; i < 10; i++) {
+                    const crack = document.createElement('div');
+                    crack.style.position = 'absolute';
+                    crack.style.background = 'linear-gradient(to right, transparent, #ff0000, transparent)';
+                    crack.style.width = `${Math.random() * 300 + 100}px`;
+                    crack.style.height = '3px';
+                    crack.style.left = `${Math.random() * window.innerWidth}px`;
+                    crack.style.top = `${Math.random() * window.innerHeight}px`;
+                    crack.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
+                    crack.style.opacity = '0';
+                    crack.style.transition = 'opacity 1s';
+                    container.appendChild(crack);
+                    
+                    setTimeout(() => {
+                        crack.style.opacity = '0.7';
+                    }, i * 300);
+                }
+                
+                // Shake effect
+                let shakeCount = 0;
+                const shakeInterval = setInterval(() => {
+                    document.body.style.transform = `translate(${Math.random() * 40 - 20}px, ${Math.random() * 40 - 20}px) rotate(${Math.random() * 5 - 2.5}deg)`;
+                    shakeCount++;
+                    
+                    if (shakeCount > 60) {
+                        clearInterval(shakeInterval);
+                        document.body.style.transform = '';
+                    }
+                }, 250);
+                
+                const effect = {
+                    element: container,
+                    interval: shakeInterval,
+                    timeout: setTimeout(() => {
+                        container.style.transition = 'opacity 3s';
+                        container.style.opacity = '0';
+                        setTimeout(() => container.remove(), 3000);
+                    }, 15000)
+                };
+                currentEffects.push(effect);
+            },
+            
+            // Effect 6: Clones with personalities (lasts 20 seconds)
+            function() {
+                cleanupEffects();
+                const cloneCount = 8;
+                const personalities = [
+                    { color: '#ff0000', text: 'CLICK ME!', speed: 3 },
+                    { color: '#00ff00', text: 'NO, CLICK ME!', speed: 2 },
+                    { color: '#0000ff', text: 'I\'M THE REAL ONE!', speed: 4 },
+                    { color: '#ffff00', text: 'DON\'T LISTEN TO THEM!', speed: 1 },
+                    { color: '#ff00ff', text: 'CHOOSE ME!', speed: 5 },
+                    { color: '#00ffff', text: 'I\'M SPECIAL!', speed: 2 },
+                    { color: '#ff9900', text: 'PICK ME PLEASE!', speed: 3 },
+                    { color: '#9900ff', text: 'I\'M YOUR FAVORITE!', speed: 4 }
+                ];
+                
+                for (let i = 0; i < cloneCount; i++) {
+                    const personality = personalities[i];
+                    const clone = btn.cloneNode(true);
+                    clone.textContent = personality.text;
+                    clone.style.background = personality.color;
+                    clone.style.position = 'absolute';
+                    clone.style.left = `${Math.random() * window.innerWidth}px`;
+                    clone.style.top = `${Math.random() * window.innerHeight}px`;
+                    clone.style.zIndex = '1000';
+                    clone.addEventListener('click', () => {
+                        clone.style.transform = 'scale(0)';
+                        setTimeout(() => clone.remove(), 1000);
+                        triggerRandomEffect();
+                    });
+                    document.body.appendChild(clone);
+                    
+                    // Make clones move with personality
+                    let x = parseFloat(clone.style.left);
+                    let y = parseFloat(clone.style.top);
+                    let targetX = Math.random() * window.innerWidth;
+                    let targetY = Math.random() * window.innerHeight;
+                    
+                    const moveInterval = setInterval(() => {
+                        // Change target occasionally
+                        if (Math.random() < 0.02) {
+                            targetX = Math.random() * window.innerWidth;
+                            targetY = Math.random() * window.innerHeight;
+                        }
+                        
+                        // Move toward target
+                        const dx = targetX - x;
+                        const dy = targetY - y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance > 10) {
+                            x += (dx / distance) * personality.speed;
+                            y += (dy / distance) * personality.speed;
+                        }
+                        
+                        clone.style.left = `${x}px`;
+                        clone.style.top = `${y}px`;
+                    }, 30);
+                    
+                    currentEffects.push({
+                        element: clone,
+                        interval: moveInterval,
+                        timeout: setTimeout(() => {
+                            clone.style.transition = 'all 1s';
+                            clone.style.opacity = '0';
+                            setTimeout(() => clone.remove(), 1000);
+                        }, 20000)
+                    });
+                }
+            },
+            
+            // Effect 7: Disco fever (lasts 15 seconds)
+            function() {
+                cleanupEffects();
+                const container = document.createElement('div');
+                container.className = 'permanent-effect';
+                container.style.background = 'rgba(0,0,0,0.7)';
+                document.body.appendChild(container);
+                
+                // Create disco floor
+                const tileSize = 50;
+                const cols = Math.ceil(window.innerWidth / tileSize);
+                const rows = Math.ceil(window.innerHeight / tileSize);
+                
+                for (let i = 0; i < cols * rows; i++) {
+                    const tile = document.createElement('div');
+                    tile.style.position = 'absolute';
+                    tile.style.width = `${tileSize}px`;
+                    tile.style.height = `${tileSize}px`;
+                    tile.style.left = `${(i % cols) * tileSize}px`;
+                    tile.style.top = `${Math.floor(i / cols) * tileSize}px`;
+                    container.appendChild(tile);
+                    
+                    // Animate tile color
+                    const colorInterval = setInterval(() => {
+                        tile.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    }, Math.random() * 1000 + 500);
+                    
+                    currentEffects.push({
+                        interval: colorInterval
+                    });
+                }
+                
+                // Add disco ball
+                const discoBall = document.createElement('div');
+                discoBall.style.position = 'absolute';
+                discoBall.style.width = '100px';
+                discoBall.style.height = '100px';
+                discoBall.style.left = '50%';
+                discoBall.style.top = '20%';
+                discoBall.style.transform = 'translate(-50%, -50%)';
+                discoBall.style.background = 'radial-gradient(circle at 30% 30%, white, silver)';
+                discoBall.style.borderRadius = '50%';
+                discoBall.style.boxShadow = '0 0 50px white';
+                container.appendChild(discoBall);
+                
+                // Add light spots
+                for (let i = 0; i < 8; i++) {
+                    const light = document.createElement('div');
+                    light.style.position = 'absolute';
+                    light.style.width = '200px';
+                    light.style.height = '200px';
+                    light.style.left = '50%';
+                    light.style.top = '20%';
+                    light.style.transform = `translate(-50%, -50%) rotate(${i * 45}deg)`;
+                    light.style.background = 'radial-gradient(circle, transparent, rgba(255,255,255,0.8))';
+                    light.style.clipPath = 'polygon(50% 50%, 50% 0, 55% 0)';
+                    container.appendChild(light);
+                    
+                    const lightInterval = setInterval(() => {
+                        light.style.background = `radial-gradient(circle, transparent, hsla(${Math.random() * 360}, 100%, 80%, 0.8))`;
+                    }, 300);
+                    
+                    currentEffects.push({
+                        interval: lightInterval
+                    });
+                }
+                
+                // Add floating text
+                const discoText = document.createElement('div');
+                discoText.textContent = 'DISCO FEVER!';
+                discoText.style.position = 'absolute';
+                discoText.style.top = '50%';
+                discoText.style.left = '0';
+                discoText.style.width = '100%';
+                discoText.style.textAlign = 'center';
+                discoText.style.fontSize = '72px';
+                discoText.style.color = 'white';
+                discoText.style.textShadow = '0 0 10px black';
+                discoText.style.transform = 'translateY(-50%)';
+                container.appendChild(discoText);
+                
+                // Animate text color
+                const textInterval = setInterval(() => {
+                    discoText.style.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
+                }, 200);
+                
+                const effect = {
+                    element: container,
+                    interval: textInterval,
+                    timeout: setTimeout(() => {
+                        container.style.transition = 'opacity 3s';
+                        container.style.opacity = '0';
+                        setTimeout(() => container.remove(), 3000);
+                    }, 15000)
+                };
+                currentEffects.push(effect);
+            },
+            
+            // Effect 8: Emoji apocalypse (lasts 25 seconds)
+            function() {
+                cleanupEffects();
+                const container = document.createElement('div');
+                container.className = 'permanent-effect';
+                document.body.appendChild(container);
+                
+                const emojis = ['🤪', '😈', '👻', '💀', '🤡', '👽', '🎃', '🦄', '🐉', '👾', '🤖', '👹', '👺', '☠️', '💩'];
+                const emojiCount = 200;
+                
+                for (let i = 0; i < emojiCount; i++) {
+                    setTimeout(() => {
+                        const emoji = document.createElement('div');
+                        emoji.className = 'crazy-element';
+                        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                        emoji.style.fontSize = `${Math.random() * 50 + 30}px`;
+                        emoji.style.left = `${Math.random() * window.innerWidth}px`;
+                        emoji.style.top = '-100px';
+                        emoji.style.opacity = '0';
+                        emoji.style.transition = 'opacity 1s';
+                        container.appendChild(emoji);
+                        
+                        // Fade in
+                        setTimeout(() => {
+                            emoji.style.opacity = '1';
+                        }, 100);
+                        
+                        // Falling animation
+                        const fallSpeed = Math.random() * 5 + 2;
+                        const spinSpeed = Math.random() * 10 - 5;
+                        let rotation = 0;
+                        
+                        const fall = setInterval(() => {
+                            const currentTop = parseFloat(emoji.style.top);
+                            emoji.style.top = `${currentTop + fallSpeed}px`;
+                            rotation += spinSpeed;
+                            emoji.style.transform = `rotate(${rotation}deg)`;
+                            
+                            if (currentTop > window.innerHeight + 100) {
+                                clearInterval(fall);
+                                emoji.remove();
+                            }
+                        }, 30);
+                        
+                        currentEffects.push({
+                            interval: fall,
+                            element: emoji
+                        });
+                    }, i * 100);
+                }
+                
+                // Add ground emojis
+                for (let i = 0; i < 50; i++) {
+                    const groundEmoji = document.createElement('div');
+                    groundEmoji.className = 'crazy-element';
+                    groundEmoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    groundEmoji.style.fontSize = `${Math.random() * 40 + 20}px`;
+                    groundEmoji.style.left = `${Math.random() * window.innerWidth}px`;
+                    groundEmoji.style.bottom = '0';
+                    groundEmoji.style.transform = 'translateY(100%)';
+                    groundEmoji.style.opacity = '0';
+                    groundEmoji.style.transition = 'all 1s';
+                    container.appendChild(groundEmoji);
+                    
+                    setTimeout(() => {
+                        groundEmoji.style.transform = 'translateY(0)';
+                        groundEmoji.style.opacity = '1';
+                    }, 5000 + i * 100);
+                }
+                
+                const effect = {
+                    element: container,
+                    timeout: setTimeout(() => {
+                        container.style.transition = 'opacity 3s';
+                        container.style.opacity = '0';
+                        setTimeout(() => container.remove(), 3000);
+                    }, 25000)
+                };
+                currentEffects.push(effect);
+            },
+            
+            // Effect 9: Cyberpunk matrix (lasts 20 seconds)
+            function() {
+                cleanupEffects();
+                const container = document.createElement('div');
+                container.className = 'permanent-effect';
+                container.style.background = 'rgba(0, 20, 0, 0.5)';
+                document.body.appendChild(container);
+                
+                const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+                const columns = Math.floor(window.innerWidth / 20);
+                const streams = [];
+                
+                for (let i = 0; i < columns; i++) {
+                    const column = document.createElement('div');
+                    column.style.position = 'absolute';
+                    column.style.left = `${i * 20}px`;
+                    column.style.top = '0';
+                    column.style.color = '#0f0';
+                    column.style.fontFamily = 'monospace';
+                    column.style.fontSize = '20px';
+                    column.style.width = '20px';
+                    column.style.height = '100vh';
+                    column.style.overflow = 'hidden';
+                    column.style.textShadow = '0 0 10px #0f0';
+                    container.appendChild(column);
+                    
+                    let text = '';
+                    const speed = Math.random() * 100 + 50;
+                    const streamLength = Math.floor(Math.random() * 10) + 10;
+                    
+                    // Create initial stream
+                    for (let j = 0; j < streamLength; j++) {
+                        text += chars[Math.floor(Math.random() * chars.length)] + '\n';
+                    }
+                    column.textContent = text;
+                    
+                    const updateText = setInterval(() => {
+                        // Add new character at random position
+                        const lines = text.split('\n');
+                        const randomLine = Math.floor(Math.random() * lines.length);
+                        lines[randomLine] = chars[Math.floor(Math.random() * chars.length)];
+                        text = lines.join('\n');
+                        column.textContent = text;
+                    }, speed);
+                    
+                    // Add highlight character
+                    const highlight = document.createElement('div');
+                    highlight.style.position = 'absolute';
+                    highlight.style.left = '0';
+                    highlight.style.top = `${Math.random() * 100}px`;
+                    highlight.style.color = '#fff';
+                    highlight.style.fontSize = '20px';
+                    highlight.textContent = chars[Math.floor(Math.random() * chars.length)];
+                    column.appendChild(highlight);
+                    
+                    const highlightInterval = setInterval(() => {
+                        highlight.style.top = `${Math.random() * 100}vh`;
+                        highlight.textContent = chars[Math.floor(Math.random() * chars.length)];
+                    }, 300);
+                    
+                    streams.push({
+                        element: column,
+                        updateInterval: updateText,
+                        highlightInterval: highlightInterval
+                    });
+                }
+                
+                // Add scanline
+                const scanline = document.createElement('div');
+                scanline.style.position = 'absolute';
+                scanline.style.left = '0';
+                scanline.style.top = '0';
+                scanline.style.width = '100%';
+                scanline.style.height = '2px';
+                scanline.style.background = 'rgba(0, 255, 0, 0.3)';
+                scanline.style.boxShadow = '0 0 10px #0f0';
+                container.appendChild(scanline);
+                
+                const scanlineInterval = setInterval(() => {
+                    const currentTop = parseFloat(scanline.style.top);
+                    scanline.style.top = `${(currentTop + 10) % window.innerHeight}px`;
+                }, 50);
+                
+                const effect = {
+                    element: container,
+                    intervals: [...streams.map(s => s.updateInterval), ...streams.map(s => s.highlightInterval), scanlineInterval],
+                    timeout: setTimeout(() => {
+                        container.style.transition = 'opacity 3s';
+                        container.style.opacity = '0';
+                        setTimeout(() => container.remove(), 3000);
+                    }, 20000)
+                };
+                currentEffects.push(effect);
+            },
+            
+            // Effect 10: Black hole (lasts 18 seconds)
+            function() {
+                cleanupEffects();
+                const container = document.createElement('div');
+                container.className = 'permanent-effect';
+                document.body.appendChild(container);
+                
+                // Create black hole
+                const blackHole = document.createElement('div');
+                blackHole.style.position = 'absolute';
+                blackHole.style.left = '50%';
+                blackHole.style.top = '50%';
+                blackHole.style.width = '100px';
+                blackHole.style.height = '100px';
+                blackHole.style.background = 'radial-gradient(circle, #000000, #330033)';
+                blackHole.style.borderRadius = '50%';
+                blackHole.style.transform = 'translate(-50%, -50%)';
+                blackHole.style.boxShadow = '0 0 50px #ff00ff';
+                container.appendChild(blackHole);
+                
+                // Create accretion disk
+                const disk = document.createElement('div');
+                disk.style.position = 'absolute';
+                disk.style.left = '50%';
+                disk.style.top = '50%';
+                disk.style.width = '300px';
+                disk.style.height = '300px';
+                disk.style.background = 'transparent';
+                disk.style.borderRadius = '50%';
+                disk.style.transform = 'translate(-50%, -50%)';
+                disk.style.border = '10px solid transparent';
+                disk.style.borderTopColor = '#ff00ff';
+                disk.style.borderRightColor = '#00ffff';
+                disk.style.borderBottomColor = '#ffff00';
+                disk.style.borderLeftColor = '#ff9900';
+                container.appendChild(disk);
+                
+                // Animate disk rotation
+                let rotation = 0;
+                const diskInterval = setInterval(() => {
+                    rotation += 2;
+                    disk.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+                }, 30);
+                
+                // Create particles to be sucked in
+                const particles = [];
+                for (let i = 0; i < 100; i++) {
+                    setTimeout(() => {
+                        const particle = document.createElement('div');
+                        particle.style.position = 'absolute';
+                        particle.style.width = '10px';
+                        particle.style.height = '10px';
+                        particle.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                        particle.style.borderRadius = '50%';
+                        particle.style.left = `${Math.random() * window.innerWidth}px`;
+                        particle.style.top = `${Math.random() * window.innerHeight}px`;
+                        container.appendChild(particle);
+                        
+                        const particleData = {
+                            element: particle,
+                            x: parseFloat(particle.style.left),
+                            y: parseFloat(particle.style.top),
+                            vx: 0,
+                            vy: 0,
+                            size: 10
+                        };
+                        particles.push(particleData);
+                    }, i * 150);
+                }
+                
+                // Animate particles being sucked in
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                
+                function animateParticles() {
+                    particles.forEach(particle => {
+                        if (!particle.element.parentNode) return;
+                        
+                        // Calculate direction to center
+                        const dx = centerX - particle.x;
+                        const dy = centerY - particle.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // Apply gravity
+                        const force = 10000 / (distance * distance);
+                        particle.vx += (dx / distance) * force;
+                        particle.vy += (dy / distance) * force;
+                        
+                        // Update position
+                        particle.x += particle.vx;
+                        particle.y += particle.vy;
+                        
+                        // Shrink as it gets closer
+                        if (distance < 300) {
+                            particle.size = Math.max(1, distance / 30);
+                        }
+                        
+                        particle.element.style.left = `${particle.x}px`;
+                        particle.element.style.top = `${particle.y}px`;
+                        particle.element.style.width = `${particle.size}px`;
+                        particle.element.style.height = `${particle.size}px`;
+                        
+                        // Remove if too close
+                        if (distance < 20) {
+                            particle.element.remove();
+                        }
+                    });
+                    
+                    requestAnimationFrame(animateParticles);
+                }
+                
+                animateParticles();
+                
+                // Grow black hole
+                let blackHoleSize = 100;
+                const growInterval = setInterval(() => {
+                    blackHoleSize += 2;
+                    blackHole.style.width = `${blackHoleSize}px`;
+                    blackHole.style.height = `${blackHoleSize}px`;
+                }, 200);
+                
+                const effect = {
+                    element: container,
+                    intervals: [diskInterval, growInterval],
+                    animation: animateParticles,
+                    timeout: setTimeout(() => {
+                        container.style.transition = 'opacity 3s';
+                        container.style.opacity = '0';
+                        setTimeout(() => container.remove(), 3000);
+                    }, 18000)
+                };
+                currentEffects.push(effect);
+            }
+        ];
+        
+        function triggerRandomEffect() {
+            cleanupEffects();
+            
+            if (allEffectsSeen) {
+                specialFinale();
+                return;
+            }
+            
+            // Track seen effects
+            let effectIndex;
+            if (seenEffects.size >= effects.length) {
+                allEffectsSeen = true;
+                specialFinale();
+                return;
+            } else {
+                // Get random unseen effect
+                do {
+                    effectIndex = Math.floor(Math.random() * effects.length);
+                } while (seenEffects.has(effectIndex));
+                
+                seenEffects.add(effectIndex);
+            }
+            
+            // Trigger the effect
+            effects[effectIndex]();
+            
+            clickCount++;
+            if (clickCount >= maxClicks && !allEffectsSeen) {
+                cleanupEffects();
+                document.body.innerHTML = `
+                    <div style="text-align:center;color:red;margin-top:20%;">
+                        <h1 style="font-size:60px;">YOU'RE PERSISTENT!</h1>
+                        <p style="font-size:30px;">You clicked ${maxClicks} times!</p>
+                        <p style="font-size:20px;">The page will reset in 5 seconds...</p>
+                    </div>
+                `;
+                setTimeout(() => location.reload(), 5000);
+            }
+        }
+        
+        btn.addEventListener('click', triggerRandomEffect);
+    </script>
+</body>
+</html>
